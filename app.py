@@ -1,27 +1,33 @@
 import os
 import re
+import logging
+
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-# This sample slack application uses SocketMode
-# For the companion getting started setup guide,
-# see: https://docs.slack.dev/tools/bolt-python/getting-started
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
-# Initializes your app with your bot token
+# Initializes the app with bot token
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 player_pokedex : dict[str, str] = {}
 
 @app.message("slackemon.choose")
-def choose_pokemon(message, say):
+def choose_pokemon(message, say, logger):
     user_id = message['user']
+    logger.info(f"Received 'choose' message from user {user_id}")
 
     if user_id in player_pokedex:
         chosen_pokemon = player_pokedex[user_id].capitalize()
+        logger.warning(f"User {user_id} has already chosen {chosen_pokemon}. Denying request.")
         say(text=f"You have already chosen your partner, {chosen_pokemon}! Your journey has already begun.")
         return
     
+    logger.info(f"Presenting starter choices to user {user_id}")
     say(
         text="Welcome to the world of Pokémon! It's time to choose your first partner.",
         blocks=[
@@ -61,48 +67,24 @@ def choose_pokemon(message, say):
         
 
 @app.action(re.compile(r'^choose_'))
-def handle_starter_choice(ack, body, say):
+def handle_starter_choice(ack, body, say, logger):
     ack()
 
     user_id = body["user"]["id"]
-
     chosen_pokemon_name : str = body["actions"][0]["value"]
+    logger.info(f"Received action '{body['actions'][0]['action_id']}' from user {user_id}")
 
     if user_id in player_pokedex:
+        logger.warning(f"User {user_id} tried to choose again after already having a Pokémon.")
         say(text="You've already made your choice, trainer!")
         return
 
     player_pokedex[user_id] = chosen_pokemon_name
-
+    logger.info(f"User {user_id} successfully chose {chosen_pokemon_name}. Pokedex updated.")
     say(text=f"<@{user_id}> has chosen {chosen_pokemon_name.capitalize()}! Their adventure begins now!")
 
-# Listens to incoming messages that contain "hello"
-@app.message("hello")
-def message_hello(message, say):
-    # say() sends a message to the channel where the event was triggered
-    say(
-        blocks=[
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"Hey there <@{message['user']}>!"},
-                "accessory": {
-                    "type": "button",
-                    "text": {"type": "plain_text", "text": "Click Me"},
-                    "action_id": "button_click",
-                },
-            }
-        ],
-        text=f"Hey there <@{message['user']}>!",
-    )
 
-
-@app.action("button_click")
-def action_button_click(body, ack, say):
-    # Acknowledge the action
-    ack()
-    say(f"<@{body['user']['id']}> clicked the button")
-
-
-# Start your app
+# Start the app
 if __name__ == "__main__":
+    logging.info("Starting Slackemon bot in Socket Mode...")
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
