@@ -11,14 +11,7 @@
     "bot_user": {
       "display_name": "slackemon",
       "always_online": true
-    },
-    "slash_commands": [
-      {
-        "command": "/choose",
-        "description": "Choose your first partner Pokémon!",
-        "usage_hint": ""
-      }
-    ]
+    }
   },
   "oauth_config": {
     "scopes": {
