@@ -1,7 +1,7 @@
 import os
 import re
 import logging
-
+import pokebase as pb
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -16,7 +16,7 @@ app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 player_pokedex : dict[str, str] = {}
 
-@app.message("slackemon.choose")
+@app.message("sm.choose")
 def choose_pokemon(message, say, logger):
     user_id = message['user']
     logger.info(f"Received 'choose' message from user {user_id}")
@@ -83,6 +83,19 @@ def handle_starter_choice(ack, body, say, logger):
     logger.info(f"User {user_id} successfully chose {chosen_pokemon_name}. Pokedex updated.")
     say(text=f"<@{user_id}> has chosen {chosen_pokemon_name.capitalize()}! Their adventure begins now!")
 
+
+def get_pokemon_details(name):
+    pokemon_obj = pb.pokemon(name)
+    details = {
+        "name" : pokemon_obj.name.capitalize(),
+        "sprite": pokemon_obj.sprites.front_default,
+        "hp": pokemon_obj.stats[0].base_stat * 2,
+        "moves": [
+            pokemon_obj.moves[0].move.name,
+            pokemon_obj.moves[1].move.name
+        ]
+    }
+    return details
 
 # Start the app
 if __name__ == "__main__":
