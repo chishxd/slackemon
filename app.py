@@ -3,6 +3,7 @@ import re
 import logging
 import pokebase as pb
 
+from typing import TypedDict
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
@@ -14,7 +15,25 @@ logging.basicConfig(
 # Initializes the app with bot token
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
-player_pokedex : dict[str, str] = {}
+
+class PokemonData(TypedDict):
+    """
+    Structure of Pokemon data stored per user.
+    
+    Example:
+    {
+        'User_ID': {
+            'pkmn_name': 'charmander',
+            'level': 5
+        }
+    }
+    """
+    pkmn_name: str
+    level: int
+
+
+player_pokedex: dict[str, PokemonData] = {}
+
 
 @app.message("sm.choose")
 def choose_pokemon(message, say, logger):
@@ -22,7 +41,7 @@ def choose_pokemon(message, say, logger):
     logger.info(f"Received 'choose' message from user {user_id}")
 
     if user_id in player_pokedex:
-        chosen_pokemon = player_pokedex[user_id].capitalize()
+        chosen_pokemon = player_pokedex[user_id]['pkmn_name'].capitalize()
         logger.warning(f"User {user_id} has already chosen {chosen_pokemon}. Denying request.")
         say(text=f"You have already chosen your partner, {chosen_pokemon}! Your journey has already begun.")
         return
@@ -79,7 +98,7 @@ def handle_starter_choice(ack, body, say, logger):
         say(text="You've already made your choice, trainer!")
         return
 
-    player_pokedex[user_id] = chosen_pokemon_name
+    player_pokedex[user_id] = {'pkmn_name' : chosen_pokemon_name, 'level': 5}
     logger.info(f"User {user_id} successfully chose {chosen_pokemon_name}. Pokedex updated.")
     say(text=f"<@{user_id}> has chosen {chosen_pokemon_name.capitalize()}! Their adventure begins now!")
 
