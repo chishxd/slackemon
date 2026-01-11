@@ -1,10 +1,6 @@
-# Getting Started ⚡️ Bolt for Python
+# Slackemon
 
-> Slack app example from 📚 [Getting started with Bolt for Python](https://docs.slack.dev/tools/bolt-python/getting-started)
-
-## Overview
-
-This is a Slack app built with the [Bolt for Python framework](https://docs.slack.dev/tools/bolt-python/) that showcases responding to events and interactive buttons.
+A Slack Bot to Play Pokemon!
 
 ## Running locally
 
@@ -20,10 +16,10 @@ export SLACK_APP_TOKEN=<your-app-level-token>
 
 ```zsh
 # Clone this project onto your machine
-git clone https://github.com/slack-samples/bolt-python-getting-started-app.git
+git clone https://github.com/chishxd/slackemon.git
 
 # Change into this project
-cd bolt-python-getting-started-app/
+cd slackemon/
 
 # Setup virtual environment
 python3 -m venv .venv
@@ -38,10 +34,6 @@ pip install -r requirements.txt
 ```zsh
 python3 app.py
 ```
-
-## More examples
-
-Looking for more examples of Bolt for Python? Browse to [bolt-python/examples/](https://github.com/slackapi/bolt-python/tree/main/examples) for a long list of usage, server, and deployment code samples!
 
 ## Contributing
 
