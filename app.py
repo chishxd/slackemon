@@ -166,18 +166,25 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
 
     user_id = message["user"]
     if user_id not in player_pokedex:
+        logger.warning(f"User {user_id} has already chosen {player_pokedex[user_id]['pkmn_name']}. Denying request.")
         say("You haven't chose a pokemon yet... Please choose one!")
         return
     
+    logger.info(f"Fetching info for {player_pokedex[user_id]['pkmn_name']} with level {player_pokedex[user_id]['level']}")
     player_pkmn = get_pokemon_details(player_pokedex[user_id]["pkmn_name"])
+
+    logger.info(f"Calculating stats for {player_pkmn['name']}")
     player_pkmn_stats = calculate_stats(player_pkmn, player_pokedex[user_id]["level"])
 
     rndm_pkmn_id = random.randint(1, 151)
     rndm_pkmn_lvl = random.randint(3, 7)
+    logger.info(f"Randomly chose {rndm_pkmn_id} with {rndm_pkmn_lvl} level, fetching info now...")
 
     rndm_pkmn = get_pokemon_details(rndm_pkmn_id)
     rndm_pkmn_stats = calculate_stats(rndm_pkmn, rndm_pkmn_lvl)
+    logger.info(f"Fetched info for {rndm_pkmn['name']} with level {player_pokedex[user_id]['level']}")
 
+    logger.info("Storing battle info in active_battles")
     active_battles[user_id] = {"player_pkmn": player_pkmn, "player_pkmn_stats": player_pkmn_stats,
                                 "enemy_pkmn": rndm_pkmn, "enemy_pkmn_stats": rndm_pkmn_stats}
     
@@ -194,7 +201,7 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
             },
             "value": move_name.lower(),
             "action_id": f"battle_move_{i}"
-        },
+        }
         move_buttons.append(button)
 
     blocks =  [
