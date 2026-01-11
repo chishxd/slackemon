@@ -182,6 +182,21 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
                                 "enemy_pkmn": rndm_pkmn, "enemy_pkmn_stats": rndm_pkmn_stats}
     
     
+    move_buttons = []
+
+    for i, move_name in enumerate(player_pkmn["moves"]):
+        button = { 
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": move_name.capitalize(),
+                "emoji": True
+            },
+            "value": move_name.lower(),
+            "action_id": f"battle_move_{i}"
+        },
+        move_buttons.append(button)
+
     blocks =  [
 		{
 			"type": "section",
@@ -215,28 +230,7 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
 		},
 		{
 			"type": "actions",
-			"elements": [
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": player_pkmn['moves'][0].capitalize(),
-						"emoji": True
-					},
-					"value": player_pkmn['moves'][0],
-					"action_id": "move_0"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": player_pkmn['moves'][1].capitalize(),
-						"emoji": True
-					},
-					"value": player_pkmn['moves'][1],
-					"action_id": "move_1"
-				}
-			]
+			"elements": move_buttons
 		},
 		{
 			"type": "actions",

@@ -28,7 +28,9 @@ def get_pokemon_details(name_or_id : str | int) -> dict:
         "hp": pokemon_obj.stats[0].base_stat * 2,
         "moves": [
             pokemon_obj.moves[0].move.name,
-            pokemon_obj.moves[1].move.name
+            pokemon_obj.moves[1].move.name,
+            pokemon_obj.moves[2].move.name,
+            pokemon_obj.moves[3].move.name,
         ]
     }
     return details
