@@ -36,6 +36,28 @@ player_pokedex: dict[str, PokemonData] = {}
 
 @app.message("sm.choose")
 def choose_pokemon(message, say, logger):
+    """
+    Handle the initial Pokemon selection for a new player.
+    This function presents starter Pokemon choices (Bulbasaur, Charmander, or Squirtle) 
+    to users who haven't chosen a partner yet. If the user has already chosen a Pokemon, 
+    they are notified that their journey has begun.
+    Args:
+        message (dict): The incoming Slack message object containing user information.
+            Expected to have a 'user' key with the user ID.
+        say (callable): Slack say function used to send messages back to the channel/user.
+        logger (logging.Logger): Logger instance for recording function events and errors.
+    Returns:
+        None: Returns early if the user has already chosen a Pokemon, otherwise presents
+            the selection interface via Slack blocks.
+    Side Effects:
+        - Logs info and warning messages about user actions
+        - Sends Slack messages with interactive button blocks for Pokemon selection
+        - Checks global player_pokedex dictionary for existing user choices
+    Note:
+        Depends on the global 'player_pokedex' dictionary to track user selections.
+        The actual Pokemon selection is handled by action handlers for the button interactions.
+    """
+
     user_id = message['user']
     logger.info(f"Received 'choose' message from user {user_id}")
 
@@ -86,6 +108,31 @@ def choose_pokemon(message, say, logger):
 
 @app.action(re.compile(r'^choose_'))
 def handle_starter_choice(ack, body, say, logger):
+    """    Handle the user's selection of a starter Pokémon.
+
+        This function processes the user's choice of a starter Pokémon from the interactive
+        message. It validates that the user hasn't already chosen a starter, then adds the
+        chosen Pokémon to the player's Pokédex at level 5 and announces their choice.
+
+            ack: Acknowledgment function from Slack that must be called to confirm receipt
+                of the interaction.
+            body (dict): The interaction payload from Slack containing user information and
+                the selected action details.
+            say: Slack function to send a message to the channel where the interaction occurred.
+            logger: Logger instance for recording events and debugging information.
+
+        Returns:
+            None
+
+        Side Effects:
+            - Acknowledges the Slack interaction
+            - Updates the global player_pokedex dictionary with the user's starter Pokémon
+            - Sends a message to the channel announcing the user's choice
+            - Logs the interaction and any warnings/errors
+
+        Raises:
+            None explicitly, but may raise KeyError if expected keys are missing from body.
+    """
     ack()
 
     user_id = body["user"]["id"]
@@ -106,35 +153,3 @@ def handle_starter_choice(ack, body, say, logger):
 if __name__ == "__main__":
     logging.info("Starting Slackemon bot in Socket Mode...")
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
-
-# if __name__ == "__main__":
-#     print("--- Testing get_pokemon_details() ---")
-    
-#     # Test with a name
-#     bulbasaur_base_stats = get_pokemon_details("bulbasaur")
-#     print("Bulbasaur's Base Stats:")
-#     pprint(bulbasaur_base_stats)
-    
-#     # Test with an ID to be sure
-#     squirtle_base_stats = get_pokemon_details(7)
-#     print("\nSquirtle's Base Stats:")
-#     pprint(squirtle_base_stats)
-
-#     print("--- Testing get_pokemon_details() ---")
-#     bulbasaur_base_stats = get_pokemon_details("bulbasaur")
-#     print("Bulbasaur's Base Stats:")
-#     pprint(bulbasaur_base_stats)
-#     squirtle_base_stats = get_pokemon_details(7)
-#     print("\nSquirtle's Base Stats:")
-#     pprint(squirtle_base_stats)
-
-#     print("\n--- Testing calculate_battle_stats() ---")
-    
-#     # Let's use Bulbasaur's data to test a few levels
-#     level_1_stats = calculate_stats(bulbasaur_base_stats, 1)
-#     print("Level 1 Bulbasaur's Battle Stats:")
-#     pprint(level_1_stats)
-
-#     level_5_stats = calculate_stats(bulbasaur_base_stats, 5)
-#     print("\nLevel 5 Bulbasaur's Battle Stats:")
-#     pprint(level_5_stats)
