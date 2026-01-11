@@ -1,10 +1,13 @@
 import os
 import re
 import logging
+import random
 
-from typing import TypedDict
+from typing import TypedDict, Callable, Any
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+from helpers import get_pokemon_details, calculate_stats
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,12 +35,12 @@ class PokemonData(TypedDict):
 
 
 player_pokedex: dict[str, PokemonData] = {}
-
+active_battles = {}
 
 @app.message("sm.choose")
-def choose_pokemon(message, say, logger):
-    """
-    Handle the initial Pokemon selection for a new player.
+def choose_pokemon(message: dict, say: Callable, logger: logging.Logger) -> None:
+    """ Handle the initial Pokemon selection for a new player.
+
     This function presents starter Pokemon choices (Bulbasaur, Charmander, or Squirtle) 
     to users who haven't chosen a partner yet. If the user has already chosen a Pokemon, 
     they are notified that their journey has begun.
@@ -107,11 +110,11 @@ def choose_pokemon(message, say, logger):
         
 
 @app.action(re.compile(r'^choose_'))
-def handle_starter_choice(ack, body, say, logger):
+def handle_starter_choice(ack: Callable, body: dict, say: Callable, logger: logging.Logger):
     """    Handle the user's selection of a starter Pokémon.
 
-        This function processes the user's choice of a starter Pokémon from the interactive
-        message. It validates that the user hasn't already chosen a starter, then adds the
+        This function processes the user's choice of a starter Pokémon. 
+        It validates that the user hasn't already chosen a starter, then adds the
         chosen Pokémon to the player's Pokédex at level 5 and announces their choice.
 
             ack: Acknowledgment function from Slack that must be called to confirm receipt
@@ -147,6 +150,116 @@ def handle_starter_choice(ack, body, say, logger):
     player_pokedex[user_id] = {'pkmn_name' : chosen_pokemon_name, 'level': 5}
     logger.info(f"User {user_id} successfully chose {chosen_pokemon_name}. Pokedex updated.")
     say(text=f"<@{user_id}> has chosen {chosen_pokemon_name.capitalize()}! Their adventure begins now!")
+
+
+@app.message("sm.challenge")
+def handle_challenge_message(message: dict, say: Callable, logger: logging.Logger):
+    """Handle the pokemon battle initiation logic
+
+    This function initiates a pokemon battle after validating if they have any pokemon in party
+
+    Args:
+        message (dict): The incoming slack message object containing user inforrmation
+        say (Callable): A slack function to send messages in channels
+        logger (logging.Logger): The Logger to log stuff
+    """
+
+    user_id = message["user"]
+    if user_id not in player_pokedex:
+        say("You haven't chose a pokemon yet... Please choose one!")
+        return
+    
+    player_pkmn = get_pokemon_details(player_pokedex[user_id]["pkmn_name"])
+    player_pkmn_stats = calculate_stats(player_pkmn, player_pokedex[user_id]["level"])
+
+    rndm_pkmn_id = random.randint(1, 151)
+    rndm_pkmn_lvl = random.randint(3, 7)
+
+    rndm_pkmn = get_pokemon_details(rndm_pkmn_id)
+    rndm_pkmn_stats = calculate_stats(rndm_pkmn, rndm_pkmn_lvl)
+
+    active_battles[user_id] = {"player_pkmn": player_pkmn, "player_pkmn_stats": player_pkmn_stats,
+                                "enemy_pkmn": rndm_pkmn, "enemy_pkmn_stats": rndm_pkmn_stats}
+    
+    
+    blocks =  [
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": f"A wild {rndm_pkmn["name"]} has appeared!"
+			}
+		},
+		{
+			"type": "image",
+			"title": {
+				"type": "plain_text",
+				"text": f"{rndm_pkmn["name"]}!",
+				"emoji": True
+			},
+			"image_url": rndm_pkmn["sprite"],
+			"alt_text": rndm_pkmn["name"]
+		},
+		{
+			"type": "context",
+			"elements": [
+				{
+					"type": "mrkdwn",
+					"text": f"{rndm_pkmn['name']} *HP*: {rndm_pkmn_stats["hp"]}/{rndm_pkmn_stats["hp"]}"
+				},
+                {
+					"type": "mrkdwn",
+					"text": f"{player_pkmn['name']} *HP*: {player_pkmn_stats["hp"]}/{player_pkmn_stats["hp"]}"
+				}
+			]
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": player_pkmn['moves'][0].capitalize(),
+						"emoji": True
+					},
+					"value": player_pkmn['moves'][0],
+					"action_id": "move_0"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": player_pkmn['moves'][1].capitalize(),
+						"emoji": True
+					},
+					"value": player_pkmn['moves'][1],
+					"action_id": "move_1"
+				}
+			]
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Run",
+						"emoji": True
+					},
+					"value": "run",
+					"action_id": "run",
+					"style": "danger"
+				}
+			]
+		}
+	]
+
+    say(
+        blocks = blocks,
+    )
+
 
 
 # Start the app
