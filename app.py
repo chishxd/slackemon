@@ -171,7 +171,7 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
         return
     
     logger.info(f"Fetching info for {player_pokedex[user_id]['pkmn_name']} with level {player_pokedex[user_id]['level']}")
-    player_pkmn = get_pokemon_details(player_pokedex[user_id]["pkmn_name"])
+    player_pkmn = get_pokemon_details(player_pokedex[user_id]["pkmn_name"], player_pokedex[user_id]["level"])
 
     logger.info(f"Calculating stats for {player_pkmn['name']}")
     player_pkmn_stats = calculate_stats(player_pkmn, player_pokedex[user_id]["level"])
@@ -180,7 +180,7 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
     rndm_pkmn_lvl = random.randint(3, 7)
     logger.info(f"Randomly chose {rndm_pkmn_id} with {rndm_pkmn_lvl} level, fetching info now...")
 
-    rndm_pkmn = get_pokemon_details(rndm_pkmn_id)
+    rndm_pkmn = get_pokemon_details(rndm_pkmn_id, rndm_pkmn_lvl)
     rndm_pkmn_stats = calculate_stats(rndm_pkmn, rndm_pkmn_lvl)
     logger.info(f"Fetched info for {rndm_pkmn['name']} with level {player_pokedex[user_id]['level']}")
 
