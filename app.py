@@ -166,7 +166,7 @@ def handle_challenge_message(message: dict, say: Callable, logger: logging.Logge
 
     user_id = message["user"]
     if user_id not in player_pokedex:
-        logger.warning(f"User {user_id} has already chosen {player_pokedex[user_id]['pkmn_name']}. Denying request.")
+        logger.warning(f"User {user_id} is trying to challenge without a Pokemon. Denying request.")
         say("You haven't chose a pokemon yet... Please choose one!")
         return
     
